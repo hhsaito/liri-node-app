@@ -17,39 +17,23 @@ var client = new twitter({
 var params = {screen_name: 'hhsaito'};
 
 inquirer.prompt([
-
   {
     type: "list",
     name: "userInput",
     message: "Please select what you would like to do",
     choices: ['My Tweets', 'Search Spotify', 'Search OMDB']
   }
-
 // After the prompt, store the user's response in a variable called location.
 ]).then(function(choices) {
-
   // console.log(location.userInput);
   if (choices.userInput === "My Tweets") {
     myTweets();
   }
-
   if (choices.userInput === "Search Spotify") {
     spotifyThisSong();
   }
-  if (choices.userInput === 'OMDB') {
-    request('http://www.omdbapi.com/?t=Ran&y=&plot=short&tomatoes=true&r=json', function (error, response, body) {
-      if (!error && response.statusCode == 200) {
-        var parsedData = JSON.parse(body);
-        console.log(parsedData);
-        // console.log(parsedData.Title);
-        // console.log(parsedData.Year); 
-        // console.log(parsedData.Rated, parsedData.Country, parsedData.Language, parsedData.Plot, parsedData.Actors);
-
-        // Rotten Tomatoes Rating.
-        // Rotten Tomatoes URL.// Show the HTML for the Google homepage. 
-      }
-      console.log('OK');
-    });
+  if (choices.userInput === 'Search OMDB') {
+    checkOMDB();
   }
 });
 
@@ -66,6 +50,9 @@ function myTweets() {
           console.log(tweets[i].created_at, tweets[i].text);
         }
       }
+    }
+    else {
+      console.log('Error occurred: ' + error);
     }
   });
 }
@@ -96,6 +83,37 @@ function spotifyThisSong() {
         console.log('Track: ', data.tracks.items[i].name);
         console.log('Track: ', data.tracks.items[i].preview_url);
         console.log('Album: ', data.tracks.items[i].album.name);
+      }
+    });
+  });
+}
+function checkOMDB() {
+  var movieTitle = [];
+  inquirer.prompt([
+    {
+      name: "movieTitle",
+      message: "Movie name?"
+    }
+  ]).then(function(movies) {
+    movieTitle = movies.movieTitle;
+    var url = 'http://www.omdbapi.com/?t=' + movieTitle + '&y=&plot=short&tomatoes=true&r=json';
+    request(url, function (error, response, body) {
+      if (!error && response.statusCode == 200) {
+
+        var parsedData = JSON.parse(body);
+        
+        console.log('Title: ' + parsedData.Title);
+        console.log('Year: ' + parsedData.Year); 
+        console.log('Rating: ' + parsedData.Rated);
+        console.log('Country: ' + parsedData.Country);
+        console.log('Language: ' + parsedData.Language); 
+        console.log('Plot Summary: ' + parsedData.Plot);
+        console.log('Actors: ' + parsedData.Actors);
+        console.log('Rotten Tomato Rating: ' + parsedData.tomatoRating);
+        console.log('Rotten Tomato URL: ' + parsedData.tomatoURL);
+      }
+      else {
+        console.log('Error occurred: ' + error);
       }
     });
   });
