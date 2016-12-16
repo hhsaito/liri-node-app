@@ -3,6 +3,7 @@ var inquirer = require("inquirer");
 var spotify = require('spotify');
 var request = require('request');
 var twitter = require("twitter");
+var FS = require("fs");
 var myKeys = require("./keys.js");
 
 // Prompt the user to provide location information.
@@ -21,7 +22,7 @@ inquirer.prompt([
     type: "list",
     name: "userInput",
     message: "Please select what you would like to do",
-    choices: ['My Tweets', 'Search Spotify', 'Search OMDB']
+    choices: ['My Tweets', 'Search Spotify', 'Search OMDB', 'Do what it says']
   }
 // After the prompt, store the user's response in a variable called location.
 ]).then(function(choices) {
@@ -34,6 +35,19 @@ inquirer.prompt([
   }
   if (choices.userInput === 'Search OMDB') {
     checkOMDB();
+  }
+  if (choices.userInput === 'Do what it says') {
+    FS.readFile('./random.txt', 'utf8', function(error, data) {
+      if (error) {
+        console.log('Error occured: ' + error);
+      }
+      content = data;
+      console.log(content);
+      processFile(); 
+    });
+    function processFile() {
+    console.log('Log again: ' + content);
+}
   }
 });
 
@@ -95,13 +109,20 @@ function checkOMDB() {
       message: "Movie name?"
     }
   ]).then(function(movies) {
-    movieTitle = movies.movieTitle;
+
+    if ( movies.movieTitle != '' ) {
+      movieTitle = movies.movieTitle;
+    }
+    else {
+      movieTitle = 'Mr. Nobody';
+    }
+    
     var url = 'http://www.omdbapi.com/?t=' + movieTitle + '&y=&plot=short&tomatoes=true&r=json';
     request(url, function (error, response, body) {
       if (!error && response.statusCode == 200) {
 
         var parsedData = JSON.parse(body);
-        
+
         console.log('Title: ' + parsedData.Title);
         console.log('Year: ' + parsedData.Year); 
         console.log('Rating: ' + parsedData.Rated);
