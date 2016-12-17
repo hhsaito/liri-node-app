@@ -2,20 +2,11 @@
 var inquirer = require("inquirer");
 var spotify = require('spotify');
 var request = require('request');
-var twitter = require("twitter");
 var FS = require("fs");
-var myKeys = require("./keys.js");
+var myTweets = require("./myTweets");
 
-// Prompt the user to provide location information.
-
-var client = new twitter({
-  consumer_key: myKeys.twitterKeys.consumer_key,
-  consumer_secret: myKeys.twitterKeys.consumer_secret,
-  access_token_key: myKeys.twitterKeys.access_token_key,
-  access_token_secret: myKeys.twitterKeys.access_token_secret
-});
-
-var params = {screen_name: 'hhsaito'};
+// Twitter module
+var tryTweeting = new myTweets();
 
 inquirer.prompt([
   {
@@ -26,9 +17,9 @@ inquirer.prompt([
   }
 // After the prompt, store the user's response in a variable called location.
 ]).then(function(choices) {
-  // console.log(location.userInput);
+
   if (choices.userInput === "My Tweets") {
-    myTweets();
+    tryTweeting.myLiriTweets();
   }
   if (choices.userInput === "Search Spotify") {
     spotifyThisSong();
@@ -41,35 +32,16 @@ inquirer.prompt([
       if (error) {
         console.log('Error occured: ' + error);
       }
-      content = data;
-      console.log(content);
-      processFile(); 
+
+      data = data.split(",");
+      
+      if ( data[0] === 'spotify-this-song' ){
+        spotifySong(data[1]);
+      }
     });
-    function processFile() {
-    console.log('Log again: ' + content);
-}
   }
 });
 
-function myTweets() {
-  client.get('statuses/user_timeline', params, function(error, tweets, response) {
-    if (!error) {
-      if ( tweets.length < 20 ) {
-        for ( var i = 0; i < tweets.length; i++ ) {
-          console.log(tweets[i].created_at, tweets[i].text);
-        }
-      } 
-      else {
-        for ( var i = 0; i < 20; i++ ) {
-          console.log(tweets[i].created_at, tweets[i].text);
-        }
-      }
-    }
-    else {
-      console.log('Error occurred: ' + error);
-    }
-  });
-}
 function spotifyThisSong() {
   var songName = [];
   inquirer.prompt([
@@ -85,20 +57,22 @@ function spotifyThisSong() {
     else {
       songName = 'The Sign';
     }
-
-    spotify.search({ type: 'track', query: songName }, function(err, data) {
-      if ( err ) {
-          console.log('Error occurred: ' + err);
-          return;
-      }
-      // Do something with 'data'
-      for ( var i = 0; i < data.tracks.items.length; i++ ) {
-        console.log('Artist: ', data.tracks.items[i].artists[0].name);
-        console.log('Track: ', data.tracks.items[i].name);
-        console.log('Track: ', data.tracks.items[i].preview_url);
-        console.log('Album: ', data.tracks.items[i].album.name);
-      }
-    });
+    spotifySong(songName);
+  });
+}
+function spotifySong(songName) {
+  spotify.search({ type: 'track', query: songName }, function(err, data) {
+    if ( err ) {
+        console.log('Error occurred: ' + err);
+        return;
+    }
+    // Do something with 'data'
+    for ( var i = 0; i < data.tracks.items.length; i++ ) {
+      console.log('Artist: ', data.tracks.items[i].artists[0].name);
+      console.log('Track: ', data.tracks.items[i].name);
+      console.log('Preview URL: ', data.tracks.items[i].preview_url);
+      console.log('Album: ', data.tracks.items[i].album.name);
+    }
   });
 }
 function checkOMDB() {
